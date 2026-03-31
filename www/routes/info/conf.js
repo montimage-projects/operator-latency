@@ -25,8 +25,7 @@ router.get("/", function( req, res, next ){
 
   fs.readFile( INTERFACES_FILE, { encoding: 'utf8' }, function (err, probe) {
     if( err ){
-      res.status(500).send( err );
-      return;
+      probe = "";
     }
     fs.readFile( OPERATOR_CONFIG_FILE, { encoding: 'utf8' }, function (err, operator) {
       if( err ){
