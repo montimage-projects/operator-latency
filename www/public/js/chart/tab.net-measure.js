@@ -123,7 +123,7 @@ ReportFactory.createLatencyReport = function(fPeriod){
             const ylabel = "Round-trip time (microsecond)";
             var data = db.data();
 
-            var obj = splitDataByNic(data, COL.PKT_LOSS_PCT)
+            var obj = splitDataByNic(data, fMetric.selectedOption());
 
             var $widget = $("#" + cLine.elemID).getWidgetParent();
             $widget.find(".filter-bar").height(25);
@@ -236,7 +236,7 @@ ReportFactory.createJitterReport = function(fPeriod){
          $group["_id"][ el ] = "$" + el;
       });
 
-      [ COL.LATENCY_AVG.id, COL.JITTER.id, COL.PKT_LOSS_PCT.id ]
+      [ COL.JITTER.id ]
       .forEach( function( el ){
           $group[ el ] = {"$avg" : "$" + el};
       });
