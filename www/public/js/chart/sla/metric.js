@@ -36,49 +36,55 @@ var ReportFactory = {
             init_metrics    = obj.metrics;
 
             var table_rows = [{
-               type    : "<thead>",
-               children: [{
-                  type     : "<tr>",
-                  children : [{
-                     type : "<th>",
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Metrics"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Alerts"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Violations"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Priority"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Enable"
-                     }
-                  },{
-                     type : "<th>",
-                     attr : {
-                        text : "Supported"
-                     }
+                  type    : "<thead>",
+                  children: [{
+                     type     : "<tr>",
+                     children : [{
+                        type : "<th>",
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Metrics"
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Alert Value"
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Violation Value"
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Unit" 
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Priority" 
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Enable"
+                        }
+                     },{
+                        type : "<th>",
+                        attr : {
+                           text : "Supported"
+                        }
+                     }]
                   }]
                }]
-            }];
-            
+
+
             init_components.sort( function( a, b ){
                return a.id - b.id;
             });
-            
+
             for( var i=0; i<init_components.length; i++){
                var comp = init_components[ i ];
                //show only probe that is indicated in URL by probe_id
@@ -137,8 +143,8 @@ var ReportFactory = {
                            attr : {
                               class: "fa fa-info-circle",
                               "data-toggle":"tooltip",
-                              title: me.description
-                           } 
+                              title: me.description == undefined ? me.name : me.description
+                           }
                         }]
                      });
 
@@ -172,41 +178,60 @@ var ReportFactory = {
                         }
                      }]
                   });
-                  //priority
-                  row.children.push({
-                     type     : "<td>",
-                     children : [{
-                        type : "<select>",
-                        attr : {
-                           id      : "priority-" + comp.id + "-" + me.id,
-                           class   : "form-control",
-                           required: true,
-                           disabled: me.support === false
-                        },
+
+                  //unit
+                     const unitChildren = getUnitOptions(me.name, me.unit);
+
+                     // unit
+                     row.children.push({
+                        type     : "<td>",
                         children : [{
-                           type : "<option>",
+                           type : "<select>",
                            attr : {
-                              value   : "HIGH",
-                              text    : "HIGH",
-                              selected: (me.priority == "HIGH")
-                           }
-                        },{
-                           type : "<option>",
-                           attr : {
-                              value   : "MEDIUM",
-                              text    : "MEDIUM",
-                              selected: (me.priority == "MEDIUM")
-                           }
-                        },{
-                           type : "<option>",
-                           attr : {
-                              value   : "LOW",
-                              text    : "LOW",
-                              selected: (me.priority == "LOW")
-                           }
+                              id      : "unit-" + comp.id + "-" + me.id,
+                              class   : "form-control",
+                              // required: true,
+                              disabled: me.support === false
+                           },
+                           children : unitChildren
                         }]
-                     }]
-                  });
+                     });
+                     //priority
+                     row.children.push({
+                        type     : "<td>",
+                        children : [{
+                           type : "<select>",
+                           attr : {
+                              id      : "priority-" + comp.id + "-" + me.id,
+                              class   : "form-control",
+                              required: true,
+                              disabled: me.support === false
+                           },
+                           children : [{
+                              type : "<option>",
+                              attr : {
+                                 value   : "HIGH",
+                                 text    : "HIGH",
+                                 selected: (me.priority == "HIGH")
+                              }
+                           },{
+                              type : "<option>",
+                              attr : {
+                                 value   : "MEDIUM",
+                                 text    : "MEDIUM",
+                                 selected: (me.priority == "MEDIUM")
+                              }
+                           },{
+                              type : "<option>",
+                              attr : {
+                                 value   : "LOW",
+                                 text    : "LOW",
+                                 selected: (me.priority == "LOW")
+                              }
+                           }]
+                        }]
+                     });
+
                   //enable/disable
                   row.children.push({
                      type     : "<td>",
@@ -340,7 +365,7 @@ var ReportFactory = {
 
             $("#" + arr[0].id + "-content" ).append( MMTDrop.tools.createDOM( form_config ) ) ;
             window._loadSelectedMetrics();
-            $('[data-toggle="tooltip"]').tooltip();   
+            $('[data-toggle="tooltip"]').tooltip();
          }//end rederTable function
 
 
@@ -349,6 +374,8 @@ var ReportFactory = {
             var obj = window._mmt;
             if( obj.selectedMetric == undefined )
                return;
+
+            const init_components = obj.components;
 
             for( var i=0; i<obj.components.length; i++){
                var comp = obj.components[ i ];
@@ -369,16 +396,108 @@ var ReportFactory = {
 
                      var id = comp.id + "-" + me.id;
 
-                     $("#alert-"     + id).val( sel.alert     ),
-                     $("#violation-" + id).val( sel.violation ),
-                     $("#priority-"  + id).val( sel.priority  ),
-                     $("#enable-"    + id).prop( "checked", sel.enable )
+                     if(sel.unit != undefined) 
+                         $("[id='unit-" + id + "']").val( sel.unit      )
+
+                     $("[id='priority-" + id + "']").val( sel.priority  );
+
+                     $("[id='alert-" + id + "']").val( sel.alert     ),
+                     $("[id='violation-" + id + "']").val( sel.violation );
+                     $("[id='enable-" + id + "']").prop( "checked", sel.enable );
                   }
+
+                  // only allowing ML or the rest to be triggered
+/*
+                  const mlId = metrics.find(item => item.name === "attack.DDoS")?.id;
+                  const mlIdSearch = mlId?.replace(".", "\\.");
+                  $(".onoffswitch-checkbox").change(function() {
+                     // when the ML is selected, disable the rest
+                     if (mlId && $(this).attr("id") === "enable-" + comp.id + "-" + mlId &&
+                        $(".onoffswitch-checkbox:not(#enable-" + comp.id + "-" + mlIdSearch + "):checked").length &&
+                        $(".onoffswitch-checkbox#enable-" + comp.id + "-" + mlIdSearch + ":checked").length) {
+                           $(".onoffswitch-checkbox:not(#enable-" + comp.id + "-" + mlIdSearch + ")").prop("checked", false);
+                           MMTDrop.alert.alert("If ML Attack Detection is enabled, all other metrics will be disabled.");
+                        }
+                     // when another is selected, disable the ML
+                     else if (mlId && $(this).attr("id") !== "enable-" + comp.id + "-" + mlId &&
+                        $(".onoffswitch-checkbox#enable-" + comp.id + "-" + mlIdSearch + ":checked").length) {
+                           $(".onoffswitch-checkbox#enable-" + comp.id + "-" + mlIdSearch).prop("checked", false);
+                           MMTDrop.alert.alert("If any other metric is enabled, ML Attack Detection will be disabled.");
+                        }
+                  });
+*/
             }
+
          }//end load the previously selected values to the form
 
 
+function getUnitOptions ( title, unit )  {
 
+   switch (title) {
+      case "dlTput.minDlTputRequirement":
+      case "dlTput.maxDlTputPerSlice":
+      case "ulTput.maxUlTputPerSlice":
+         return ([
+            {
+               type : "<option>",
+               attr : {
+                  value   : "Kbps",
+                  text    : "Kbps",
+                  selected: (unit == "Kbps")
+               }
+            },{
+               type : "<option>",
+               attr : {
+                  value   : "Mbps",
+                  text    : "Mbps",
+                  selected: (unit == "Mbps")
+               }
+            },{
+               type : "<option>",
+               attr : {
+                  value   : "Gbps",
+                  text    : "Gbps",
+                  selected: (unit == "Gbps")
+               }
+            }
+         ]);
+      case "dlTput.maxTputVariation":
+      case "ulTput.maxTputVariation":
+         return ([
+            {
+               type : "<option>",
+               attr : {
+                  value   : "percent",
+                  text    : "percent",
+                  selected: (unit == "percent")
+               }
+            }
+         ]);
+      case "latency.maxE2ELatency":
+         return([
+            {
+               type : "<option>",
+               attr : {
+                  value   : "ms",
+                  text    : "ms",
+                  selected: (unit == "ms")
+               }
+            },
+            {
+               type : "<option>",
+               attr : {
+                  value   : "s",
+                  text    : "s",
+                  selected: (unit == "s")
+               }
+            }
+         ]);
+      case "latency.lowJitter":
+      case "dim.maxPDUsessions":
+      case "dim.numberOfTerminals":
+         return [];
+   }
+}
 
 function _convertStringToThreshold( str ){
    let expr = str
@@ -388,7 +507,9 @@ function _convertStringToThreshold( str ){
       .replace("==",  '"$eq" :')
       .replace("=",  '"$eq" :');
    try{
-      expr = JSON.parse( "{" + expr + "}" );
+      // convert to MongoDB expr only if str contains the supported operators
+      if( expr != str )
+         expr = JSON.parse( "{" + expr + "}" );
    }catch( err ){
       MMTDrop.alert.error( "Incorrect expression: <pre>"+ str +"</pre>");
       MMTDrop.alert.alert("Support currently only 6 operators: <pre>>=, <=, >, <, !=, ==</pre>");
@@ -397,10 +518,106 @@ function _convertStringToThreshold( str ){
    return expr;
 }
 
+function validateValue ( metric, value ) {
+   const name = metric.name;
+   const acceptableValues = metric.acceptableValues;
+
+   // TODO: fix
+   if (acceptableValues == undefined) return true
+
+   const val = JSON.parse(value);
+
+   if (name == "dlTput.minDlTputRequirement") {
+      if (val < acceptableValues ) {
+         alert ("The " + name + " value must be greater than " + acceptableValues);
+         return false;
+      }
+   }
+   else if (
+      name == "dlTput.maxDlTputPerSlice" ||
+      name == "ulTput.maxUlTputPerSlice"
+   ) {
+      if (val < 0) {
+         alert ("The " + name + " value must be greater than 0.");
+         return false;
+      }
+      if (val > acceptableValues) {
+         alert ("The " + name + " value must be less than " + acceptableValues);
+         return false;
+      }
+   }
+   else if (
+      name == "dlTput.maxTputVariation" ||
+      name == "ulTput.maxTputVariation" ||
+      name == "latency.maxE2ELatency" ||
+      name == "latency.lowJitter" ||
+      name == "dim.maxPDUsessions" ||
+      name == "dim.numberOfTerminals"
+   ) {
+      if (acceptableValues.indexOf(val) == -1) {
+         alert ("The " + name + " value must be one from " + acceptableValues);
+         return false;
+      }
+   }
+
+   return true;
+}
+
+function validateTypes (metric, value) {
+   const name = metric.name;
+   const val = JSON.parse(value);
+
+   if (
+      name == "dlTput.minDlTputRequirement" ||
+      name == "dlTput.maxDlTputPerSlice"    ||
+      name == "ulTput.maxUlTputPerSlice"    ||
+      name == "dlTput.maxTputVariation"     ||
+      name == "ulTput.maxTputVariation"     ||
+      name == "latency.maxE2ELatency"
+   ) {
+      if (val < 0) {
+         alert ("The " + name + " value must be greater than 0.");
+         return false;
+      }
+      // must be a float
+      if (isNaN(val)) {
+         alert ("The " + name + " value must be a number.");
+         return false;
+      }
+   }
+   else if (
+      name == "dim.maxPDUsessions" ||
+      name == "dim.numberOfTerminals"
+   ) {
+      if (val < 0) {
+         alert ("The " + name + " value must be greater than 0.");
+         return false;
+      }
+      // must be an int
+      if (isNaN(val) || val % 1 != 0) {
+         alert ("The " + name + " value must be a number.");
+         return false;
+      }
+   }
+   else if (
+      name == "latency.lowJitter"
+   ) {
+      // must be a bool
+      if (val !== true && val !== false) {
+         alert ("The " + name + " value must be a boolean.");
+         return false;
+      }
+   }
+
+   return true;
+}
 
 //       SUBMIT FORM
          window._checkSubmit = function(){
             var obj = window._mmt;
+
+            const init_components = obj.components;
+            const isInfluence = init_components.some(item => item.title.indexOf("INFLUENCE") != -1)
 
             var selectedMetric = {};
 
@@ -418,21 +635,44 @@ function _convertStringToThreshold( str ){
                for( var j=0; j<metrics.length; j++ ){
                   var me = metrics[ j ];
                   var id = comp.id + "-" + me.id;
+
                   const alert = $("[id='alert-" + id + "']").val();
-
-                  if( alert != "" && _convertStringToThreshold( alert ) == undefined )
-                     return false;
-
                   const violation = $("[id='violation-" + id + "']").val();
-                  if( violation != "" && _convertStringToThreshold( violation ) == undefined )
-                     return false;
 
-                  selectedMetric[ comp.id ][ me.id ] = {
-                        alert     : alert,
-                        violation : violation,
-                        priority  : $("[id='priority-" + id + "']").val(),
-                        enable    : $("[id='enable-" + id + "']").is(":checked")
-                  };
+                  if (isInfluence) {
+                     // if( value != "" && !validateValue(me, value) )
+                        // return false;
+
+                     if ( alert != "" && validateTypes( me, alert ) == undefined )
+                        return false;
+
+                     if ( violation != "" && validateTypes( me, violation ) == undefined )
+                        return false;
+
+                     selectedMetric[ comp.id ][ me.id ] = {
+                           alert     : JSON.parse(alert),
+                           violation : JSON.parse(violation),
+                           enable    : $("[id='enable-" + id + "']").is(":checked"),
+                           unit      : $("[id='unit-" + id + "']").val(),
+                           priority  : $("[id='priority-" + id + "']").val(),
+                     };
+                  }
+                  else {
+
+                     if( alert != "" && _convertStringToThreshold( alert ) == undefined )
+                        return false;
+
+                     if( violation != "" && _convertStringToThreshold( violation ) == undefined )
+                        return false;
+
+                     selectedMetric[ comp.id ][ me.id ] = {
+                           alert     : alert,
+                           violation : violation,
+                           unit      : $("[id='unit-" + id + "']").val(),
+                           priority  : $("[id='priority-" + id + "']").val(),
+                           enable    : $("[id='enable-" + id + "']").is(":checked")
+                     };
+                  }
                }
             }
             //save to db

@@ -74,11 +74,14 @@ var ReportFactory = {
          //get number of alerts from database
          const
             TYPE = "$4", //index of "type" in DB
+            // show only alerts inside the selected time period (last 5 min, last hour, ...)
             match = { "0": { "$gte": status_db.time.begin, "$lt": status_db.time.end }, "1": getAppID() },
+            // show only the alert concerning the current app
+            //match = { "1": getAppID()},
             group = {
                "_id": { "1": "$1", "2": "$2", "3": "$3" }, //group by app_id, comp_id and metric_id
                "alert": { "$sum": { $cond: { if: { $eq: [TYPE, "alert"] }, then: 1, else: 0 } } },
-               "violate": { "$sum": { $cond: { if: { $eq: [TYPE, "violation"] }, then: 1, else: 0 } } },
+               "violation": { "$sum": { $cond: { if: { $eq: [TYPE, "violation"] }, then: 1, else: 0 } } },
                "app_id": { "$first": "$1" },
                "comp_id": { "$first": "$2" },
                "me_id": { "$first": "$3" },
@@ -100,6 +103,7 @@ var ReportFactory = {
                name = obj.metricname,
                   value = obj.value;
 
+               const isInfluence = ["dlTput.", "ulTput.", "latency.", "dim.", "attack."].some(substr => name.startsWith(substr));
 
                //if no condition => no alert/violation
                if (value == "" || value == undefined)
@@ -108,7 +112,7 @@ var ReportFactory = {
                const db = new MMTDrop.Database({ collection: "data_link", action: "aggregate", raw: true });
                //_checkIsolation( new , cb );
                const sliceId = comp_id + "";
-               const threshold = _convertStringToThreshold(value);
+               const threshold = isInfluence ? undefined : _convertStringToThreshold(value);
 
                switch (name) {
                   case "limit_gtp": {
@@ -196,8 +200,9 @@ var ReportFactory = {
                            cb(count);
                         });
                      return;
+                     break;
                   }
-
+                  default:
                      for (var i = 0; i < data.length; i++) {
                         var o = data[i];
                         if (o.me_id == metric_id && o.comp_id == comp_id) {
@@ -279,7 +284,7 @@ var ReportFactory = {
                   attr: {
                      colspan: 5,
                      style: "font-weight: bold",
-                     html: "<u>C" + comp_id + "</u>: " + comp.title + (comp.ip == undefined ? "" : "(" + comp.ip + ")")
+                     html: "<u>C" + comp_id + "</u>: " + comp.title + (comp.ip == undefined ? "" : " (" + comp.ip + ")")
                   }
                }]
             };
@@ -383,7 +388,7 @@ var ReportFactory = {
                         type: "<span>",
                         attr: {
                            "class": "alerts",
-                           "data-type": "violate",
+                           "data-type": "violation",
                            "data-compid": comp.id,
                            "data-metricid": me.id,
                            "data-metricname": me.name,
@@ -521,7 +526,9 @@ var ReportFactory = {
          }
 
          MMTDrop.tools.gotoURL('/chart/sla/' + name +
-            MMTDrop.tools.getQueryString(["app_id"], "&probe_id=" + probe_id + "&alert=" + alert_thr + "&violation=" + violation_thr + extra_url));
+            MMTDrop.tools.getQueryString(["app_id"], 
+                      //"&probe_id=" + probe_id +  //2 Sep 2025: disable probe filtre to avoid mismatch probe_id as Influence has only 1 probe
+                      "&alert=" + alert_thr + "&violation=" + violation_thr + extra_url));
       }
    },
 
@@ -879,10 +886,10 @@ function _getActions(reaction_id) {
 }
 
 //reaction: {"comp_id": "30",
-//              "conditions": { "availability": [  "violate" ], "incident": [  "alert" ]},
+//              "conditions": { "availability": [  "violation" ], "incident": [  "alert" ]},
 //              "actions": [ "filtre_port", "restart_apache"],"priority": "MEDIUM","note": "note","enable": true}
-//data    : [{"alert":0,"violate":63,"app_id":"__app","comp_id":1,"me_id":"1"},
-//             {"alert":0,"violate":63,"app_id":"__app","comp_id":30,"me_id":"1"}
+//data    : [{"alert":0,"violation":63,"app_id":"__app","comp_id":1,"me_id":"1"},
+//             {"alert":0,"violation":63,"app_id":"__app","comp_id":30,"me_id":"1"}
 //            ]
 function _verifyCondition(reaction, data) {
    const conditions = reaction.conditions;
@@ -905,7 +912,7 @@ function _verifyCondition(reaction, data) {
                //one cond
                (cond.length == 1 && o[cond[0]] > 0)
                ||
-               //having either "alert" or "violate"
+               //having either "alert" or "violation"
                (cond.length == 2 && (o[cond[0]] > 0 || o[cond[1]] > 0))
             )
          ) {

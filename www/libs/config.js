@@ -317,8 +317,8 @@ else{
 //      }
 
       if( config.sla == undefined ){
-         console.error('Error in '+ config.location +': sla must be defined.');
-         process.exit( 1 );
+         console.warning('Error in '+ config.location +': sla is not defined, set it empty.');
+         config.sla = {init_metrics: [], init_components: [], actions: []};
       }
 
       if( !Array.isArray( config.sla.init_components ) ){

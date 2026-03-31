@@ -128,7 +128,7 @@ router.all("/status", function(req, res, next){
       const TYPE="$4";
       const $group =  { "_id": {"1": "$1", "2": "$2"}, //group by app_id, comp_id and metric_id
             "alert"     : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "alert" ] }    , then: 1, else: 0 }}}, 
-            "violate"   : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} }
+            "violation"   : { "$sum"   : {$cond: { if: { $eq: [ TYPE, "violation" ] }, then: 1, else: 0 }} }
             };
       
       router.dbconnector._queryDB("metrics_alerts", "aggregate", [{$match: $match}, {$group: $group}], function( err, apps){
@@ -148,8 +148,8 @@ router.all("/status", function(req, res, next){
                appId      : appID,
                componentId: comID,
                alert      : ( apps.length == 0 ) ? 0 : apps[0].alert,
-               violate    : ( apps.length == 0 ) ? 0 : apps[0].violate,
-               underRemediation: ( apps.length == 0 || apps[0].violate <= 5) ? 0 : apps[0].violate - 5,
+               violation    : ( apps.length == 0 ) ? 0 : apps[0].violation,
+               underRemediation: ( apps.length == 0 || apps[0].violation <= 5) ? 0 : apps[0].violation - 5,
          });
       }, false);
       return;
