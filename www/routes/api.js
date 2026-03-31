@@ -145,7 +145,7 @@ function proc_request(req, res, next) {
       if( action === "update" ){
          checkNotNull( query.$match, "Need $match" );
 
-         var ret = dbconnector.mdb.collection( collection ).update( query.$match, query.$data, query.$options, sendResponse);
+         dbconnector.mdb.collection( collection ).update( query.$match, query.$data, query.$options, sendResponse);
 
       }else if( action === "insert" ){
          dbconnector.mdb.collection( collection ).insert( query.$data, query.$options, sendResponse );

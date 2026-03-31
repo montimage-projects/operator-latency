@@ -111,7 +111,7 @@ function patchLegacyCollectionMethods(collection) {
 	if (!collection.update) {
 		collection.update = async function(filter, update, options, callback) {
 			try {
-				otions = options || {};
+				options = options || {};
 				
 				const result = (options.multi || false)
 					? await this.updateMany(filter, update, options)
@@ -128,7 +128,7 @@ function patchLegacyCollectionMethods(collection) {
 	if (!collection.remove) {
 		collection.remove = async function(filter, options, callback) {
 			try {
-				otions = options || {};
+				options = options || {};
 				
 				const result = (options.justOne || false)
 					? await this.deleteOne(filter, options)
