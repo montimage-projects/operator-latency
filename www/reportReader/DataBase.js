@@ -29,6 +29,7 @@ const GTP      = dataAdaptor.GtpStatsColumnId;
 const LICENSE  = dataAdaptor.LicenseColumnId;
 const OTT      = dataAdaptor.OTTQoSColumnId;
 const STAT     = dataAdaptor.StatColumnId;
+const LAT      = dataAdaptor.LatencyColumnId;
 
 const FORMAT_ID = COL.FORMAT_ID,
 PROBE_ID        = COL.PROBE_ID,
@@ -257,10 +258,14 @@ module.exports = function(){
             COL.ACTIVE_FLOWS, COL.DATA_VOLUME, COL.PACKET_COUNT, COL.PAYLOAD_VOLUME,
             ],
          set:[COL.MAC_SRC, COL.MAC_DST, COL.IP_SRC_INIT_CONNECTION, COL.APP_ID,  GTP.ENB_NAME, GTP.MME_NAME ]
-            }
-      ),
+            },
+         ),
+         latency: new DataCache( inserter, "data_latency",{
+         key: [COL.PROBE_ID, COL.SOURCE_ID],
+         inc: [LAT.LATENCY_MIN, LAT.LATENCY_MAX, LAT.LATENCY_AVG, LAT.JITTER, LAT.PKT_LOSS_PCT],
+          })
    };
-   
+
    function hasModule( module_name ){
       return config.modules.indexOf( module_name ) != -1;
    }
@@ -318,6 +323,12 @@ module.exports = function(){
       var is_micro_flow = false;
 
       switch( format ){
+         case dataAdaptor.CsvFormat.LATENCY_PROBE_FORMAT:
+            self.dataCache.latency.addMessage( msg );
+            //add empty (zero) values to the total collection
+            // the timestamp (ts) indicates the presence of the probe_id
+            self.dataCache.total.addMessage( [dataAdaptor.CsvFormat.DUMMY_FORMAT, probe_id, input_src, ts] );
+            return;
 
          //System statistic: CPU, memory
          case dataAdaptor.CsvFormat.SYS_STAT_FORMAT:

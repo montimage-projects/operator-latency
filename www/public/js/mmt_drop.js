@@ -510,6 +510,18 @@ if( typeof Highcharts !== "undefined" )
             PROBABILITY_BUFFERING       : {id: 12, label: "Probability Buffering" }
          },
 
+         LatencyColumn: {
+            FORMAT_ID   : {id: 0, label: ""},
+            PROBE_ID    : {id: 1, label: ""},
+            SOURCE_ID   : {id: 2, label: "NIC"},
+            TIMESTAMP   : {id: 3, label: "Time"},
+            LATENCY_MIN : {id: 4, label: "Latency min"},
+            LATENCY_AVG : {id: 5, label: "Latency avg"},
+            LATENCY_MAX : {id: 6, label: "Latency max"},
+            JITTER      : {id: 7, label: "Jitter"},
+            PKT_LOSS_PCT: {id: 8, label: "Packet loss"},
+         },
+
          /**
           * Mapping between RTP meric IDs and metric names
           */

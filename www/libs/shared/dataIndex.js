@@ -26,7 +26,8 @@ module.exports = {
           
           BA_PROFILE_FORMAT       : 12,
           BA_BANDWIDTH_FORMAT     : 11,
-          
+          LATENCY_PROBE_FORMAT    : 20,
+
           LICENSE                 : 30,
           
           NDN_FORMAT              : 625,
@@ -326,6 +327,17 @@ module.exports = {
          DST      : 7,
          DATA_VOLUME: 8,
        },
+       LatencyColumnId: {
+         FORMAT_ID: 0,
+         PROBE_ID : 1,
+         SOURCE_ID: 2,
+         TIMESTAMP: 3,
+         LATENCY_MIN : 4,
+         LATENCY_AVG : 5,
+         LATENCY_MAX : 6,
+         JITTER      : 7,
+         PKT_LOSS_PCT: 8,
+      },
       /**
        * A table of Category-Id: Application-Id[]
        */

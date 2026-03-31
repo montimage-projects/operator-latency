@@ -124,6 +124,9 @@ var all_pages = {
     "replay-traffic" : {
       title: "Replay Traffic"
     },
+    "net-measure" : {
+      title: "Measure"
+    },
     'setting':{
       title: "Settings"
     }
