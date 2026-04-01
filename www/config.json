@@ -144,6 +144,40 @@
 			"_data_processing": "if(cache.host == undefined){ const exec=require('child_process').execSync; cache.host=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..kubernetes\\.io/hostname}\"'), cache.label=exec('kubectl get pods -A -l thalesOrchestrationId -o jsonpath=\"{..thalesOrchestrationId}\"') }; m={alert:m, metadata:{hostname: cache.host, label: cache.label}}; console.log(JSON.stringify(m)); return m;",
 			"keep_alive": true
 		},
+		"sla": {
+			"actions": {
+				"use_primary_chan": {
+					"description": "Reroute traffic to the primary Channel",
+					"agent_description": "The agent requests the router component to use the primary Channel",
+					"inputs": {
+						"ip_src": {"description": "Source IP", "type": "IP"},
+						"ip_dst": {"description": "Destination IP", "type": "IP"},
+						"port_src": {"description": "Source Port", "type": "number"},
+						"port_dst": {"description": "Destination Port", "type": "number"}
+					}
+				},
+				"use_chan_2": {
+					"description": "Reroute traffic to Channel 2",
+					"agent_description": "The agent requests the router component to use Channel 2",
+					"inputs": {
+						"ip_src": {"description": "Source IP", "type": "IP"},
+						"ip_dst": {"description": "Destination IP", "type": "IP"},
+						"port_src": {"description": "Source Port", "type": "number"},
+						"port_dst": {"description": "Destination Port", "type": "number"}
+					}
+				},
+				"drop_traffic": {
+					"description": "Drop traffic",
+					"agent_description": "The agent requests the router component to drop traffic",
+					"inputs": {
+						"ip_src": {"description": "Source IP", "type": "IP"},
+						"ip_dst": {"description": "Destination IP", "type": "IP"},
+						"port_src": {"description": "Source Port", "type": "number"},
+						"port_dst": {"description": "Destination Port", "type": "number"}
+					}
+				}
+			}
+		},
 		"_data_processing": "m[1]='probe-A'; return m;"
 	},
 	"_layout": "attack",

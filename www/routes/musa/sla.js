@@ -331,18 +331,21 @@ function extract_metrics_json( app_config, index, cb ){
 
       //init component from sla file
       if( !app_config.init_components[ index ] ){
-         app_config.init_components[ index ] = {};
-
-         for( var i=0; i<sla.config.length; i++ ){
-            const conf = sla.config[i];
-            if( conf.config_name == "init.component")
-               app_config.init_components[ index ] = conf.config_value;
-         }
+         app_config.init_components[ index ] = {metrics:[]};
       }
 
       var comp = app_config.init_components[ index ];
-      const title = "INFLUENCE5G"
 
+      let title = "Montimage SLA"
+      for( var i=0; i<sla.config.length; i++ ){
+         const conf = sla.config[i];
+         if( conf.config_name == "init.component")
+            comp = conf.config_value;
+         if( comp.title )
+            title = comp.title;
+      }
+
+      //find in config.json if there exists any component having same name
       for( var i=0; i<app_config.init_components.length; i++) {
          if( app_config.init_components[i].title == title ){
             comp = app_config.init_components[i];
@@ -352,10 +355,16 @@ function extract_metrics_json( app_config, index, cb ){
 
       comp.sla = JSON.stringify( sla );
 
+      //mark that the component was initialized from JSON SLA (not from XML SLA)
+      comp.from_json = true;
       if( title != undefined && comp.title == undefined ){
          comp.title = title;
       }
-      comp.id = parseInt( comp.id );
+
+      if( comp.id )
+        comp.id = parseInt( comp.id );
+      else
+        comp.id = index;
 
       //IP ranges
       const config = sla.config || [];
@@ -369,6 +378,8 @@ function extract_metrics_json( app_config, index, cb ){
 
       //check if existing in app_config.components
       var existed = false;
+      if( app_config.components == undefined )
+         app_config.components = [];
       for( var i=0; i<app_config.components.length; i++ )
          if( app_config.components[i].id == comp.id ){
             existed = true;
@@ -394,7 +405,8 @@ function extract_metrics_json( app_config, index, cb ){
          if( metric.unit != undefined )
             metricData.unit = metric.unit;
 
-         if ( ["attack.DDoS", "dlTput.maxDlTputPerSlice", "ulTput.maxUlTputPerSlice", "latency.maxE2ELatency" ].indexOf( metric.name ) != -1)
+         if ( metric.name.startsWith("mon.") || metric.name.startsWith("measure.")
+              || ["attack.DDoS", "dlTput.maxDlTputPerSlice", "ulTput.maxUlTputPerSlice", "latency.maxE2ELatency" ].indexOf( metric.name ) != -1)
             metricData.support = true;
          else {
             metricData.support = false;
@@ -500,8 +512,6 @@ function extract_metrics( app_config, index, cb ){
          let description = get_value( spec, ["MetricDefinition", 0, "definition", 0 ] );
          DESCRIPTION[ refID ] = description;
       }
-
-
 
 
       comp.metric_types = TYPES;

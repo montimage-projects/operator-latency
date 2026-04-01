@@ -119,25 +119,35 @@ $(function () {
     if (SLAs != undefined) {
       //list of reaction agents
       const $reactionsAgents = $($(".menu_enforcement")[0].children[1]);
-      for (var act in SLAs.actions) {
-        var action = SLAs.actions[act];
-        var name = act.replace(/_/g, " ");
-        $reactionsAgents.append('<li class="sub_menu_' + act + '" title="' + action.agent_description + '"><a style="text-transform: capitalize;" onclick=\'MMTDrop.tools.modal("agent-des","' + name + ' Agent","","' + action.agent_description + '").$title.css("text-transform","capitalize")\'>' + name + ' Agent</a></li>');
+      if( SLAs.actions ){
+        let isFirst = true
+        // add separator
+        for (var act in SLAs.actions) {
+          if( isFirst ){
+            isFirst = false;
+            $reactionsAgents.append('<li role="separator" class="divider"></li>');
+          }
+          var action = SLAs.actions[act];
+          //var name = act.replace(/_/g, " ");
+          var name = action.description;
+          $reactionsAgents.append('<li class="sub_menu_' + act + '" title="' + action.agent_description + '"><a style="text-transform: capitalize;" onclick=\'MMTDrop.tools.modal("agent-des","' + name + ' ","","' + action.agent_description + '").$title.css("text-transform","capitalize")\'>' + name + '</a></li>');
+        }
       }
 
       //list of fixed metrics
       const $metrics_list = $($(".menu_sla")[0].children[1]);
       const queryString = "&app_id=" + URL_PARAM.app_id + (URL_PARAM.probe_id == undefined ? "" : ("&probe_id=" + URL_PARAM.probe_id));
-      for (var i = 0; i < SLAs.init_metrics.length; i++) {
-        var m = SLAs.init_metrics[i];
-        $metrics_list.append('<li class="sub_menu_' + m.name + '"><a href="/chart/sla/alerts?metric_id=' + m.id + queryString + '">' + m.title + '</a></li>');
-      }
-      //add  separator
-      if (SLAs.init_metrics.length > 0)
+            //add  separator
+      if (SLAs.init_metrics && SLAs.init_metrics.length > 0){
         $metrics_list.append('<li role="separator" class="divider"></li>');
+        for (var i = 0; i < SLAs.init_metrics.length; i++) {
+          var m = SLAs.init_metrics[i];
+          $metrics_list.append('<li class="sub_menu_' + m.name + '"><a href="/chart/sla/alerts?metric_id=' + m.id + queryString + '">' + m.title + '</a></li>');
+        }
+      }
     }
     //update list of metrics getting from SLA
-    const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined ? "__app" : MMTDrop.tools.getURLParameters().app_id);
+    const app_id = getAppID();
     MMTDrop.tools.ajax("/api/metrics/find?raw", [{ $match: { app_id: app_id } }], "POST", {
       error: function () { },
       success: function (data) {
@@ -162,7 +172,13 @@ $(function () {
 
         const $metrics_list = $($(".menu_sla")[0].children[1]);
         const queryString = "&app_id=" + URL_PARAM.app_id + (URL_PARAM.probe_id == undefined ? "" : ("&probe_id=" + URL_PARAM.probe_id));
+        
+        let isFirst = true
         for (var m in metrics) {
+          if( isFirst ){
+            isFirst = false;
+            $metrics_list.append('<li role="separator" class="divider"></li>');
+          }
           if (metrics[m].title == null)
             return;
           if (metrics[m].support === true)

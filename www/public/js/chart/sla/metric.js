@@ -19,6 +19,7 @@ var availableReports = {};
 
 var ReportFactory = {
       createMetricReport: function ( fPeriod ) {
+         fProbe.hide();
          fPeriod.hide();
          fAutoReload.hide();
 
@@ -85,8 +86,8 @@ var ReportFactory = {
             for( var i=0; i<init_components.length; i++){
                var comp = init_components[ i ];
                //show only probe that is indicated in URL by probe_id
-               if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
-                  continue;
+               //if( URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp.id )
+               //   continue;
                if( comp.metrics == undefined || comp.metrics.length == 0 )
                   continue;
 
@@ -614,7 +615,7 @@ function validateTypes (metric, value) {
             var obj = window._mmt;
 
             const init_components = obj.components;
-            const isInfluence = init_components.some(item => item.title.indexOf("INFLUENCE") != -1)
+            const isInfluence = true; //init_components.some(item => item.title.indexOf("INFLUENCE") != -1)
 
             var selectedMetric = {};
 

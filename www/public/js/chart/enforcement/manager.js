@@ -253,7 +253,7 @@ var ReportFactory = {
           row.children.push({
               type : "<td>",
               attr : {
-                style  : "max-width: 400px !important; min-width: 100px !important; overflow: hidden;text-overflow: ellipsis;white-space: nowrap;",
+                style  : "max-width: 400px !important; min-width: 100px !important; text-overflow: ellipsis;white-space: nowrap;",
                 	title  : reaction.note,
                 	text   : reaction.note
               }
@@ -309,13 +309,20 @@ var ReportFactory = {
         	  onsubmit : "return window._checkSubmit();"  
           },
           children : [{
-            type     : "<table>",
+            type     : "<div>",
             attr     : {
-              class : "table table-striped table-bordered table-condensed dataTable no-footer",
-              id    : "tblData",
-              style : "width: 100%"
+              class : "",
+              style : "width: 100%; overflow: auto"
             },
-            children : table_rows
+            children : [{
+               type     : "<table>",
+               attr     : {
+                 class : "table table-striped table-bordered table-condensed dataTable no-footer",
+                 id    : "tblData",
+                 style : "width: 100%"
+               },
+               children : table_rows
+             }]
           },{
             type: "<div>",
             attr: {

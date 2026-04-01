@@ -94,13 +94,21 @@ var ReportFactory = {
                if( comp.metrics )
                   metrics = metrics.concat( comp.metrics.slice( 0 ) );
 
+               console.log(metrics)
+
                //keep only metrics being enabled/supported
                var avail_metrics = [];
                for( var j=0; j<metrics.length; j++ ){
                   var me = metrics[ j ];
+                  var sel = obj.selectedMetric[ comp.id ];
+                  if( sel != undefined )
+                     sel = sel[ me.id ];
 
                   //show only metrics being enabled
-                  if( me.enable === true )
+                  if (sel != undefined) {
+                     if (sel.enable === true) avail_metrics.push(me);
+                     continue;
+                  } else if (me.enable === true)
                      avail_metrics.push( me );
                }
                metrics = avail_metrics;
@@ -130,7 +138,7 @@ var ReportFactory = {
                   var checked = false;
                   var x = reactionObj.conditions[me.name];
                   if( Array.isArray( x ))
-                     checked = (x.indexOf( "violate" ) != -1);
+                     checked = (x.indexOf( "violation" ) != -1);
 
                   row.children.push({
                      type     : "<td>",
@@ -172,11 +180,11 @@ var ReportFactory = {
                      }]
                   });
 
-                  //violate
+                  //violation
                   var checked = false;
                   var x = reactionObj.conditions[me.name];
                   if( Array.isArray( x ))
-                     checked = (x.indexOf( "violate" ) != -1);
+                     checked = (x.indexOf( "violation" ) != -1);
 
                   row.children.push({
                      type     : "<td>",
@@ -189,18 +197,18 @@ var ReportFactory = {
                         children : [{
                            type    : "<input>",
                            attr    : {
-                              id            : "violate-" + me.name,
+                              id            : "violation-" + me.name,
                               class         : "onoffswitch-checkbox react-conditions",
                               type          : "checkbox",
                               "data-metric" : me.name,
-                              "data-type"   : "violate",
+                              "data-type"   : "violation",
                               checked       :  checked
                            }
                         },{
                            type    : "<label>",
                            attr    : {
                               class   : "onoffswitch-label",
-                              for     : "violate-" + me.name,
+                              for     : "violation-" + me.name,
                            },
                            children  : [{
                               type  : "<span>",
@@ -415,16 +423,16 @@ var ReportFactory = {
                         count = $("#alert-" + cond).prop("checked", true ).length;
                         if( count > 0 ){
                            text.push( "alert" );
-                           
+
                            $("#conditions-div").scrollToChild( "#alert-" + cond );
                         }
                      }
-                     if( val.violate ){
+                     if( val.violation ){
                         //check whether the current form contains one of the conditions
-                        count = $("#violate-" + cond).prop("checked", true ).length;
+                        count = $("#violation-" + cond).prop("checked", true ).length;
                         if( count > 0 ){
-                           text.push( 'violate' );
-                           
+                           text.push( 'violation' );
+
                            $("#conditions-div").scrollToChild( "#tr-" + cond );
                         }
                      }
@@ -510,7 +518,7 @@ var ReportFactory = {
                   setTimeout( MMTDrop.tools.gotoURL, 2000,
                       //no need "probe_id" as we want to show all of them
                         "/chart/enforcement/reaction", {param : ["app_id"], add: "probe_id=null"} );
-                        
+
                }
             });
 

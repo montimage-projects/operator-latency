@@ -47,6 +47,7 @@ function _convertStringToThreshold(str) {
 
 var ReportFactory = {
    createUploadForm: function (fPeriod) {
+      fProbe.hide();
       const COL = MMTDrop.constants.StatsColumn;
       const total_db = new MMTDrop.Database({ collection: "metrics_alerts", action: "aggregate", raw: true });
 
@@ -89,11 +90,13 @@ var ReportFactory = {
 
                const comp_id = parseInt(obj.compid),
                   metric_id = obj.metricid,
-                  type = obj.type; //either "alert" or "violation"
-               name = obj.metricname,
+                  type = obj.type, //either "alert" or "violation"
+                  name = obj.metricname,
                   value = obj.value;
 
-               const isInfluence = ["dlTput.", "ulTput.", "latency.", "dim.", "attack."].some(substr => name.startsWith(substr));
+               //use JSON-based SLA (not XML-based one which support operators > < <= etc
+               const isInfluence = true;//["dlTput.", "ulTput.", "latency.", "dim.", "attack."].some(substr => name.startsWith(substr));
+               
 
                //if no condition => no alert/violation
                if (value == "" || value == undefined)
@@ -260,8 +263,8 @@ var ReportFactory = {
          //creat each row for each metric of a component
          for (var comp_id in obj.selectedMetric) {
             //show only probe that is indicated in URL by probe_id
-            if (URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp_id)
-               continue;
+            //if (URL_PARAM.probe_id != undefined && URL_PARAM.probe_id != comp_id)
+            //   continue;
             var selMetrics = obj.selectedMetric[comp_id];
             var comp = getObject("components", comp_id)
             if (comp.metrics == undefined || comp.metrics.length == 0)

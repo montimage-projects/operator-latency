@@ -60,7 +60,7 @@ var all_pages = {
           "../sla": {
             title: "Metrics"
           },
-          "separator" : "separator"
+          //"separator" : "separator"
         }
     },
     "enforcement": {
@@ -69,7 +69,7 @@ var all_pages = {
           "reaction": {
              title: "Reactions"
            },
-           "separator_1" : "separator",
+           //"separator_1" : "separator",
 /*
            "enforcement" : {
               title: "Enforcement Dashboard",
@@ -200,7 +200,7 @@ router.get('/*', function(req, res, next) {
     other_config = JSON.parse( other_config );
     //delete some sensible informations
     ["auth_token", "database_server","redis_input","kafka_input","file_input", "socket_input", "pcap_dump", "databaseName", "adminDatabaseName", "rootDirectory"].forEach( (el) => delete(other_config[el]));
-    other_config.modules_config = {};  //TODO: need it for SLA
+    other_config.modules_config = {sla: other_config.modules_config.sla};  //TODO: need it for SLA
 
     other_config = JSON.stringify(other_config);
     res.render("chart", {
