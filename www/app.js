@@ -141,7 +141,7 @@ app.use(session({
 
 
 //active checking for MUSA
-//TODO to remove in final product
+//TODO to check compatiblity in final product
 if (config.isSLA) {
 	/*
 	  //module to check preodically if components of apps are available
@@ -149,8 +149,11 @@ if (config.isSLA) {
 	*/
 
 	//module to verify preodically if the current data are violdated
-	//const engine = require("./routes/musa/violation_check_engine.js");
-	//engine.start( pub_sub, dbconnector );
+	const check_engine = require("./routes/musa/violation_check_engine.js");
+	check_engine.start( pub_sub, dbconnector );
+	const react_engine = require("./routes/musa/reaction_manager.js");
+	react_engine.start( pub_sub, dbconnector );
+	
 	//app.use("/musa/dummy", engine.router );
 	/*  
 	  //require("./routes/musa/reaction_manager.js").start( pub_sub, dbconnector );

@@ -261,9 +261,9 @@ module.exports = function(){
             },
          ),
          latency: new DataCache( inserter, "data_latency",{
-         key: [COL.PROBE_ID, COL.SOURCE_ID],
-         inc: [LAT.LATENCY_MIN, LAT.LATENCY_MAX, LAT.LATENCY_AVG, LAT.JITTER, LAT.PKT_LOSS_PCT],
-          })
+           key: [COL.PROBE_ID, COL.SOURCE_ID],
+           inc: [LAT.LATENCY_MIN, LAT.LATENCY_MAX, LAT.LATENCY_AVG, LAT.JITTER, LAT.PKT_LOSS_PCT],
+          }),
    };
 
    function hasModule( module_name ){
@@ -414,8 +414,13 @@ module.exports = function(){
             
             
             //original message => clone a new one
-            if( self.dataCache.reports )
-               self.dataCache.reports.addMessage( dataAdaptor.formatReportItem( message ) );
+            if( self.dataCache.reports ){
+               const msg = dataAdaptor.formatReportItem( message );
+               msg.ip_src  = IP.string2NumberV4( msg[COL.IP_SRC]  );
+               msg.ip_dst  = IP.string2NumberV4( msg[COL.IP_DST]  );
+               msg.app     = dataAdaptor.getProtocolNameFromID( msg[COL.APP_ID] )
+               self.dataCache.reports.addMessage( msg );
+            }
 
 
             //unknown flows

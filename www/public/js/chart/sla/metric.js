@@ -495,6 +495,32 @@ function getUnitOptions ( title, unit )  {
       case "dim.numberOfTerminals":
          return [];
    }
+
+   const ms = ["ms", "us", "s"];
+   if( ms.includes(unit) )
+      return ms.map( function(v){
+         return {
+           type: "<option>",
+           attr: {
+             value: v,
+             text : v,
+             selected: (unit == v)
+           }
+         }
+      })
+
+   const mbps = ["Kbps", "Mbps", "Gbps"];
+   if( mbps.includes(unit) )
+      return mbps.map( function(v){
+         return {
+           type: "<option>",
+           attr: {
+             value: v,
+             text : v,
+             selected: (unit == v)
+           }
+         }
+      })
 }
 
 function _convertStringToThreshold( str ){

@@ -145,6 +145,7 @@
 			"keep_alive": true
 		},
 		"sla": {
+			"violation_check_period": 5,
 			"actions": {
 				"use_primary_chan": {
 					"description": "Reroute traffic to the primary Channel",

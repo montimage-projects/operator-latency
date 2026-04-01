@@ -23,9 +23,7 @@ var ReportFactory = {
     fAutoReload.hide();
 
     var _this    = this;
-    var app_id = MMTDrop.tools.getURLParameters().app_id;
-    if( app_id == undefined )
-        app_id = "__app";
+    var app_id = getAppID();
 
     //RENDER TABLE
     var renderTable = function ( obj ){
@@ -158,8 +156,7 @@ var ReportFactory = {
             attr  : {
             		colspan: 2,
             		align: "right",
-            		style: "border-right: none",
-            		html : conditionList.join(" and ") + ' <span class="glyphicon glyphicon-arrow-right"></span>'
+            		html : conditionList.join(" <br/> and <br/> ") + ' <span class="glyphicon glyphicon-arrow-right"></span>'
             }
           });
 

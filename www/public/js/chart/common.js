@@ -142,7 +142,8 @@ $(function () {
         $metrics_list.append('<li role="separator" class="divider"></li>');
         for (var i = 0; i < SLAs.init_metrics.length; i++) {
           var m = SLAs.init_metrics[i];
-          $metrics_list.append('<li class="sub_menu_' + m.name + '"><a href="/chart/sla/alerts?metric_id=' + m.id + queryString + '">' + m.title + '</a></li>');
+          name =  m.title || m.name ;
+          $metrics_list.append('<li class="sub_menu_' + m.name + '" title="'+ (m.description || m.title) +'"><a href="/chart/sla/alerts?metric_id=' + m.id + queryString + '">' + name + '</a></li>');
         }
       }
     }
@@ -181,10 +182,11 @@ $(function () {
           }
           if (metrics[m].title == null)
             return;
+          var name = metrics[m].title || metrics[m].name;
           if (metrics[m].support === true)
-            $metrics_list.append('<li class="sub_menu_' + metrics[m].name + '"><a href="/chart/sla/alerts?metric_id=' + metrics[m].id + queryString + '">' + metrics[m].title + '</a></li>');
+            $metrics_list.append('<li class="sub_menu_' + metrics[m].name + '" title="'+ (metrics[m].description || metrics[m].title) +'"><a href="/chart/sla/alerts?metric_id=' + metrics[m].id + queryString + '">' + name + '</a></li>');
           else
-            $metrics_list.append('<li class="sub_menu_' + metrics[m].id + ' disabled"><a>' + metrics[m].title + '</a></li>');
+            $metrics_list.append('<li class="sub_menu_' + metrics[m].id + ' disabled"><a>' + name + '</a></li>');
         }
       }
     });
@@ -250,6 +252,10 @@ $(function () {
       else if (i != "null")
         newProbeOption.push({ id: i, label: "Probe " + i });
     }
+
+    if( select_id != undefined &&
+        !newProbeOption.some( (o) => o.id == select_id ) )
+      newProbeOption.push({ id: select_id, label: "*Probe " + select_id, disabled: true, selected: true });
 
     if (newProbeOption.length > 1) {
       if (select_id == undefined || select_id == "all")

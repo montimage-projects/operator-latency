@@ -7,6 +7,7 @@ const dataAdaptor = require('../../libs/dataAdaptor');
 
 
 const COL  = dataAdaptor.StatsColumnId;
+const LAT  = dataAdaptor.LatencyColumnId;
 
 var CHECK_AVG_INTERVAL_MILISECOND = 60*1000; //1minute
 
@@ -451,6 +452,21 @@ function convertToSecond(value, unit) {
 	return value;
 }
 
+
+function convertToMicroSecond(value, unit) {
+	value = parseFloat( value );
+	switch (unit) {
+		case "s":
+			return value * 1000 * 10000;
+		case "ms":
+			return value * 1000;
+		case "us":
+			return value;
+	}
+	console.error("unkown unit " + unit);
+	return value;
+}
+
 function _checkE2eLatency( metric, m, app, com ){
    //nothing to do
 	const ipRange = com.ip;
@@ -542,6 +558,239 @@ function _checkE2eLatency( metric, m, app, com ){
 		}, false);
 }
 
+
+function _checkTargetLocation( metric, m, app, com ){
+   //nothing to do
+	const ipRange = com.ip;
+	if( !ipRange )
+		return console.log("not found IP range");
+	
+	const [cidrStart, cidrEnd] = calculateCidrRange( ipRange );
+	const now = (new Date()).getTime();
+
+	//the thresholds can be provided via SLA file
+	const alert_loc = m.alert, violation_loc = m.violation;
+	
+	const match = {0: 100}; //only session-based protocols
+	//in checking period
+	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
+	//1. IP in the list
+	match["ip_src"] = { "$gte": cidrStart, "$lte": cidrEnd };
+	//2. Port is in the list
+	match[COL.DST_LOCATION] = {"$in": [ alert_loc, violation_loc ]};
+	
+	const groupBy = {"_id": {}};
+	// group by ip_src and ip_dst
+	[COL.IP_SRC, COL.IP_DST, COL.DST_LOCATION].forEach( (e) => groupBy["_id"][e] = "$"+e);
+	
+	const query = [
+		{"$match"  : match},
+		{"$group"  : groupBy}
+	]
+	
+	console.log( "_checkTargetLocation query: ", JSON.stringify(query ) );
+	
+	dbconnector._queryDB( "reports_all", "aggregate", query, 
+		function( err, result){
+			if( err )
+				return console.error( err );
+			if( result.length  == 0 ) 
+				return;
+			console.log("_checkTargetLocation query result: ", result);
+			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
+			result.forEach( function(row){
+				const ip_src     = row["_id"][COL.IP_SRC];
+				const ip_dst     = row["_id"][COL.IP_DST];
+				const dst_loc    = row["_id"][COL.DST_LOCATION];
+				
+				// create a security alert to show it in "security" dashboard
+				const val = [
+						["ip.src", ip_src], 
+						["ip.dst", ip_dst],
+						["loc.dst", dst_loc]
+				];
+				console.log("=>  detected: ", val);
+				const other = {"ip": ip_src};
+					
+				//create a security alert only when the metric is violated
+				if( dst_loc == violation_loc ){
+					return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+				} else
+					return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.name, m.alert, val, m.priority, other);
+			}); //end forEach
+		}, false);
+}
+
+
+function _checkPacketProtocol( metric, m, app, com ){
+   //nothing to do
+	const ipRange = com.ip;
+	if( !ipRange )
+		return console.log("not found IP range");
+	
+	const [cidrStart, cidrEnd] = calculateCidrRange( ipRange );
+	const now = (new Date()).getTime();
+
+	//the thresholds can be provided via SLA file
+	const alert_loc = m.alert, violation_loc = m.violation;
+	
+	const match = {0: 100}; //only session-based protocols
+	//in checking period
+	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
+	//1. IP in the list
+	match["ip_src"] = { "$gte": cidrStart, "$lte": cidrEnd };
+	//2. Port is in the list
+	match["app"] = {"$in": [ alert_loc, violation_loc ]};
+	
+	const groupBy = {"_id": {}};
+	// group by ip_src and ip_dst
+	[COL.IP_SRC, COL.IP_DST, "app"].forEach( (e) => groupBy["_id"][e] = "$"+e);
+	
+	const query = [
+		{"$match"  : match},
+		{"$group"  : groupBy}
+	]
+	
+	console.log( "_checkPacketProtocol query: ", JSON.stringify(query ) );
+	
+	dbconnector._queryDB( "reports_all", "aggregate", query, 
+		function( err, result){
+			if( err )
+				return console.error( err );
+			if( result.length  == 0 ) 
+				return;
+			console.log("_checkPacketProtocol query result: ", result);
+			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
+			result.forEach( function(row){
+				const ip_src     = row["_id"][COL.IP_SRC];
+				const ip_dst     = row["_id"][COL.IP_DST];
+				
+				// create a security alert to show it in "security" dashboard
+				const val = [
+						["ip.src", ip_src], 
+						["ip.dst", ip_dst],
+						["app", row["_id"]["app"] ]
+				];
+				console.log("=>  detected: ", val);
+				const other = {"ip": ip_src};
+					
+				//create a security alert only when the metric is violated
+				if( row["_id"]["app"] == violation_loc ){
+					return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+				} else
+					return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.name, m.alert, val, m.priority, other);
+			}); //end forEach
+		}, false);
+}
+
+
+function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
+   //nothing to do
+	const now = (new Date()).getTime();
+
+	const unit = m.unit;
+	//the thresholds can be provided via SLA file
+	const alert_val     = convertToMicroSecond(m.alert, unit);
+	const violation_val = convertToMicroSecond(m.violation, unit);
+	
+	const match = {}; //only session-based protocols
+	//in checking period
+	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
+	match[col_id] = {"$gte": Math.min(alert_val, violation_val)};
+	
+	const groupBy = {_id: {}};
+	// group by ip_src and ip_dst
+	[col_id].forEach( (e) => groupBy[e] = {'$max': "$"+e});
+	
+	const query = [
+		{"$match"  : match},
+		{"$group"  : groupBy}
+	]
+	
+	console.log( "_checkHigherMeasureMetric query: ", JSON.stringify(query ) );
+	
+	dbconnector._queryDB( "data_latency_real", "aggregate", query, 
+		function( err, result){
+			if( err )
+				return console.error( err );
+			if( result.length  == 0 ) 
+				return;
+			console.log("_checkHigherMeasureMetric query result: ", result);
+			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
+			result.forEach( function(row){
+				const ret = row[ col_id ];
+				
+				// create a security alert to show it in "security" dashboard
+				const val = [
+						[label, ret], 
+						["unit", "microsecond"], 
+				];
+				console.log("=>  detected: ", val);
+				const other = {};
+					
+				//create a security alert only when the metric is violated
+				if( ret >= violation_val ){
+					return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+				} else
+					return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.name, m.alert, val, m.priority, other);
+			}); //end forEach
+		}, false);
+}
+
+
+
+function _checkLowerMeasureMetric( col_id, label, metric, m, app, com ){
+   //nothing to do
+	const now = (new Date()).getTime();
+
+	const unit = m.unit;
+	//the thresholds can be provided via SLA file
+	const alert_val     = convertToMicroSecond(m.alert, unit);
+	const violation_val = convertToMicroSecond(m.violation, unit);
+	
+	const match = {}; //only session-based protocols
+	//in checking period
+	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
+	match[col_id] = {"$lte": Math.max(alert_val, violation_val)};
+	
+	const groupBy = {_id: {}};
+	// group by ip_src and ip_dst
+	[col_id].forEach( (e) => groupBy[e] = {'$min': "$"+e});
+	
+	const query = [
+		{"$match"  : match},
+		{"$group"  : groupBy}
+	]
+	
+	console.log( "_checkLowerMeasureMetric query: ", JSON.stringify(query ) );
+	
+	dbconnector._queryDB( "data_latency_real", "aggregate", query, 
+		function( err, result){
+			if( err )
+				return console.error( err );
+			if( result.length  == 0 ) 
+				return;
+			console.log("_checkLowerMeasureMetric query result: ", result);
+			//result = [ { '7': 1321, '8': 295534, _id: { '18': '10.0.2.2' } } ]
+			result.forEach( function(row){
+				const ret = row[ col_id ];
+				
+				// create a security alert to show it in "security" dashboard
+				const val = [
+						[label, ret], 
+						["unit", "microsecond"], 
+				];
+				console.log("=>  detected: ", val);
+				const other = {};
+					
+				//create a security alert only when the metric is violated
+				if( ret <= violation_val ){
+					return _raiseMessage( now, constant.VIOLATION_STR, app.app_id, com.id, metric.name, m.violation, val, m.priority, other);
+				} else
+					return _raiseMessage( now, constant.ALERT_STR, app.app_id, com.id, metric.name, m.alert, val, m.priority, other);
+			}); //end forEach
+		}, false);
+}
 function perform_check(){
 
    console.log(" checking SLA violation ...");
@@ -660,6 +909,27 @@ function perform_check(){
                   case "dim.numberOfTerminals":
                      break;
 
+                  case "mon.PacketTargetLocation":
+                     _checkTargetLocation( metric, m, app, com );
+                     break;
+                  case "mon.PacketProtocol":
+                     _checkPacketProtocol( metric, m, app, com );
+                     break;
+
+                  case "measure.HigherLatency":
+                     _checkHigherMeasureMetric( LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                     break;
+                  case "measure.HigherJitter":
+                     _checkHigherMeasureMetric( LAT.JITTER, "jitter", metric, m, app, com );
+                     break;
+
+                  case "measure.LowerLatency":
+                     _checkLowerMeasureMetric( LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                     break;
+                  case "measure.LowerJitter":
+                     _checkLowerMeasureMetric( LAT.JITTER, "jitter", metric, m, app, com );
+                     break;
+
                }
             }
          }
@@ -676,9 +946,9 @@ function start( pub_sub, _dbconnector ){
 	if( ! config.sla )
 		return console.log("Not found SLA in config");
 
-	if (config.sla.violation_check_period < 10){
-		console.log("Set violation_check_period = 10 seconds");
-		config.sla.violation_check_period = 10
+	if (config.sla.violation_check_period < 5){
+		console.log("Set violation_check_period = 5 seconds");
+		config.sla.violation_check_period = 5;
 	}
 
    console.log("Start SLA violation checking engine");
@@ -717,3 +987,4 @@ var obj = {
 };
 
 module.exports = obj;
+
