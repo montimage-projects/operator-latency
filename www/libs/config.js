@@ -305,7 +305,10 @@ else{
    config.sla = tools.merge( {
       "active_check_period"   : 5,
       "violation_check_period": 5,
-      "reaction_check_period" : 5
+      "reaction_check_period" : 5,
+      init_metrics: [],
+      init_components: [],
+      actions: []
    }, config.modules_config.sla);
 
 
@@ -318,7 +321,7 @@ else{
 
       if( config.sla == undefined ){
          console.warning('Error in '+ config.location +': sla is not defined, set it empty.');
-         config.sla = {init_metrics: [], init_components: [], actions: []};
+         process.exit( 1 );
       }
 
       if( !Array.isArray( config.sla.init_components ) ){
