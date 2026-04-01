@@ -702,6 +702,8 @@ function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
 	// group by ip_src and ip_dst
 	[col_id].forEach( (e) => groupBy[e] = {'$max': "$"+e});
 	
+	[LAT.SOURCE_ID].forEach( (e) => groupBy[e] = {'$last': '$' + e} );
+	
 	const query = [
 		{"$match"  : match},
 		{"$group"  : groupBy}
@@ -723,6 +725,7 @@ function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
 				// create a security alert to show it in "security" dashboard
 				const val = [
 						[label, ret], 
+						["channel", row[ COL.SOURCE_ID ] ],
 						["unit", "microsecond"], 
 				];
 				console.log("=>  detected: ", val);
@@ -757,6 +760,8 @@ function _checkLowerMeasureMetric( col_id, label, metric, m, app, com ){
 	// group by ip_src and ip_dst
 	[col_id].forEach( (e) => groupBy[e] = {'$min': "$"+e});
 	
+	[LAT.SOURCE_ID].forEach( (e) => groupBy[e] = {'$last': '$' + e} );
+	
 	const query = [
 		{"$match"  : match},
 		{"$group"  : groupBy}
@@ -778,6 +783,7 @@ function _checkLowerMeasureMetric( col_id, label, metric, m, app, com ){
 				// create a security alert to show it in "security" dashboard
 				const val = [
 						[label, ret], 
+						["channel", row[ COL.SOURCE_ID ] ],
 						["unit", "microsecond"], 
 				];
 				console.log("=>  detected: ", val);

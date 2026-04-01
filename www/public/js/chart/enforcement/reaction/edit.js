@@ -260,7 +260,7 @@ var ReportFactory = {
                   children : [{
                      type: "<div>",
                      attr: {
-                        style : "position: absolute; top: 30px; left: 0px; bottom: 460px; right: 0px; overflow: auto; margin-bottom: 30px",
+                        style : "position: absolute; top: 30px; left: 0px; bottom: 300px; right: 0px; overflow: auto; margin-bottom: 30px",
                         id    : "conditions-div"
                      },
                      children: [{

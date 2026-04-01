@@ -53,13 +53,13 @@ var ReportFactory = {
                   },{
                      type : "<th>",
                      attr : {
-                        text : "#Triggered Actions"
+                        text : "#Triggers"
                      }
                   },{
                      type : "<th>",
                      attr : {
-                        text : "Recommendation",
-                        style: "width: 200px"
+                        text : "Last Exec",
+                        style: "width: 120px"
                      }
                   }]
                }]
@@ -201,7 +201,7 @@ var ReportFactory = {
                            "data-reaction"    : JSON.stringify( reaction ),
                            "data-reaction-id" : react_id,
                            //html: (reaction.action == "finish"? "executed ..." : "checking ...")
-                           html: ""
+                           "html": '<i class = "fa fa-refresh fa-spin fa-fw"/>'
                         },
                      });
 
@@ -260,8 +260,9 @@ var ReportFactory = {
                const query = [
                   { $match: {"4": comp_id, "5": ract_id} },
                   { $group: {
-                     _id: {"comp_id": "$4" },
-                     val: {$sum: 1}
+                     _id    : {"comp_id": "$4" },
+                     val    : {$sum: 1},
+                     last_ts: {$last: "$3"}
                   }}
                ]
 
@@ -275,6 +276,11 @@ var ReportFactory = {
                         //ensure this element is showing
                         //$("#div-alerts").scrollToChild( e, 100, 40 );
                      }, i * 100, el);
+                     
+                     var last_ts = "";
+                     if(data.length)
+                        last_ts =  MMTDrop.tools.formatDateTime(data[0].last_ts);
+                     $("#reaction-" + ract_id).html( last_ts );
                });
             });
             }, 2000);
