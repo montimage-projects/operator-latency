@@ -92,7 +92,7 @@ ReportFactory.createLatencyReport = function(fPeriod){
       $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
 
       const $group = { _id: {}};
-      [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
+      [ COL.PROBE_ID.id, COL.SOURCE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
          $group["_id"][ el ] = "$" + el;
       });
 
@@ -164,7 +164,7 @@ ReportFactory.createLatencyReport = function(fPeriod){
             format: {
                title:  formatTime,
                value: function( value ){
-                  return value + "us";
+                  return (value / 1000) + " ms";
                }
             }
          },
@@ -232,7 +232,7 @@ ReportFactory.createJitterReport = function(fPeriod){
       $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
 
       const $group = { _id: {}};
-      [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
+      [ COL.PROBE_ID.id, COL.SOURCE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
          $group["_id"][ el ] = "$" + el;
       });
 
@@ -299,7 +299,7 @@ ReportFactory.createJitterReport = function(fPeriod){
             format: {
                title:  formatTime,
                value: function( value ){
-                  return value + "us";
+                  return (value/1000) + " ms";
                }
             }
          },
@@ -368,8 +368,7 @@ function splitDataByNic(data, col){
 	
 	//first column is always timestamp
 	const columns = [ COL.TIMESTAMP ];
-	for( var l in labels )
-		columns.push({id: l, label: l})
+	Object.keys(labels).sort().forEach( (l) => columns.push({id: l, label: l}) );
 	
 	return {
 		data  : obj,
@@ -394,7 +393,7 @@ ReportFactory.createPacketLossReport = function(fPeriod){
       $match[ COL.TIMESTAMP.id ] = {$gte: status_db.time.begin, $lte: status_db.time.end };
 
       const $group = { _id: {}};
-      [ COL.PROBE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
+      [ COL.PROBE_ID.id, COL.SOURCE_ID.id, COL.TIMESTAMP.id ].forEach( function( el ){
          $group["_id"][ el ] = "$" + el;
       });
 
@@ -460,7 +459,7 @@ ReportFactory.createPacketLossReport = function(fPeriod){
             format: {
                title:  formatTime,
                value: function( value ){
-                  return value + "%";
+                  return value + " %";
                }
             }
          },

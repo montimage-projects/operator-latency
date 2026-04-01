@@ -26,16 +26,6 @@ var arr = [
    }*/
 ];
 
-function getAppID() {
-   if (MMTDrop.tools.getURLParameters().app_id == undefined)
-      return "__app";
-   return MMTDrop.tools.getURLParameters().app_id;
-}
-
-function getCompID() {
-   const id = fProbe.selectedOption().id;
-   return id;
-}
 //create reports
 
 function _convertStringToThreshold(str) {

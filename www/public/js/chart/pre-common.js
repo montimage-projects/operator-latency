@@ -51,7 +51,7 @@ if( URL_PARAM.probe_id )
 if( URL_PARAM.app_id )
   URL_PARAM.app_id = "" + URL_PARAM.app_id; //string
 else
-   URL_PARAM.app_id = "__app";
+   URL_PARAM.app_id = "sla_app";
 
 if( URL_PARAM.ts )
   URL_PARAM.ts = parseInt( URL_PARAM.ts );

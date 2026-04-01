@@ -181,8 +181,9 @@ $(function () {
     const select_id = URL_PARAM.probe_id;
 
     //this is applied when sla
-    var initialComponents = {};
-    if (fProbe.isVisible() && MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1) {
+    /*
+    const enable_sla_map_component_probe = false;
+    if (enable_sla_map_component_probe && fProbe.isVisible() && MMTDrop.config.others && MMTDrop.config.others.modules && MMTDrop.config.others.modules.indexOf("sla") != -1) {
 
       //load metric from DB
       const app_id = (MMTDrop.tools.getURLParameters().app_id == undefined ? "__app" : MMTDrop.tools.getURLParameters().app_id);
@@ -224,6 +225,7 @@ $(function () {
       });
     }
     //end sla
+    */
 
     const newProbeOption = [];
     for (var i in probes_status) {
@@ -574,3 +576,10 @@ $(function () {
   })//end $("#exportHtmlBtn").click
 });
 
+
+
+function getAppID() {
+   if (MMTDrop.tools.getURLParameters().app_id == undefined)
+      return "sla_app";
+   return MMTDrop.tools.getURLParameters().app_id;
+}

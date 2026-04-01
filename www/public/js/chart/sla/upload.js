@@ -39,13 +39,6 @@ var availableReports = {
 }
 
 
-function getAppID (){
-   if (MMTDrop.tools.getURLParameters().app_id == undefined )
-      return "";
-   return MMTDrop.tools.getURLParameters().app_id;
-}
-
-
 //create reports
 var ReportFactory = {
 	createGetForm: function( fPeriod ){
@@ -353,7 +346,7 @@ var ReportFactory = {
     fProbe.hide();
     fAutoReload.hide();
 
-    var app_id = MMTDrop.tools.getURLParameters().app_id || "__app";
+    var app_id = getAppID();
     var form_config = function( com ){
       return {
       type: "<div>",
@@ -558,7 +551,7 @@ var ReportFactory = {
     fProbe.hide();
     fAutoReload.hide();
 
-    var app_id = MMTDrop.tools.getURLParameters().app_id || "__app";
+    var app_id = getAppID();
     var form_config = function( com ){
       return {
       type: "<div>",

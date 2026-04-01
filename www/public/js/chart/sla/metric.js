@@ -22,10 +22,7 @@ var ReportFactory = {
          fPeriod.hide();
          fAutoReload.hide();
 
-         var _this    = this;
-         var app_id = MMTDrop.tools.getURLParameters().app_id;
-         if( app_id == undefined )
-            app_id = "__app";
+         var app_id = getAppID();
 
          //RENDER TABLE
          var renderTable = function ( obj ){
