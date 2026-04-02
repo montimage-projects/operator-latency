@@ -81,11 +81,14 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation){
 		//	console.log(" ==> skip this action ");
 		//	return;
 		//}
-				
+
 		//action_name in config.sla.actions
 		switch(action_name){
 			case "drop_traffic":
-				restful_action.block_flow({src_ip, dst_ip});
+				restful_action.block_flow({
+					//src_ip: src_ip, 
+					dst_ip: dst_ip
+				});
 				break;
 			case "use_chan_2":
 				
@@ -93,7 +96,8 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation){
 				
 				if( src_ip && dst_ip )
 					restful_action.redirect_flow({
-						src_ip: src_ip, dst_ip: dst_ip, 
+						//src_ip: src_ip, 
+						dst_ip: dst_ip, 
 						wan_interface: nic.secondary,
 						description: `${action_name} (${new Date()})`
 					});
@@ -267,8 +271,18 @@ function perform_check(){
 			}
 		}
 		TIMESTAMP.start = TIMESTAMP.end;
-		TIMESTAMP.end   = (new Date()).getTime();
+		TIMESTAMP.end   = last_check_ts();
 	}, false );
+}
+
+// Need to check in the past of 5 seconds
+// If we use the current timestamp (now)
+//  the data (have this timestamp) might not be available yet in the database
+// This becauses Probe flush reports each 5 seconds
+//   i.e., when reports arrived at the database, 
+//        their timestamps are at least 5 seconds in the past.
+function last_check_ts(){
+	return (new Date()).getTime() - 2*1000;
 }
 
 
@@ -276,9 +290,9 @@ function start( pub_sub, _dbconnector ){
 	if( ! config.sla )
 		return console.log("Not found SLA in config");
 
-	if (config.sla.reaction_check_period < 1){
-		console.log("Set reaction_check_period = 1 seconds");
-		config.sla.reaction_check_period = 1
+	if (config.sla.reaction_check_period < 2){
+		console.log("Set reaction_check_period = 2 seconds");
+		config.sla.reaction_check_period = 2
 	}
 
 	console.log("Start SLA reaction checking engine");
@@ -301,7 +315,7 @@ function start( pub_sub, _dbconnector ){
 		CHECK_AVG_INTERVAL_MILISECOND = config.sla.reaction_check_period * 1000; //each X seconds
 		console.log("start SLA reaction checking each " + config.sla.reaction_check_period + " seconds");
       //at the begining, we check in the period [now-X, now]
-		const now = (new Date()).getTime(); //millisecond
+		const now = last_check_ts(); //millisecond
 		TIMESTAMP.start = now - CHECK_AVG_INTERVAL_MILISECOND;
 		TIMESTAMP.end   = now;
 		setInterval(perform_check, CHECK_AVG_INTERVAL_MILISECOND);

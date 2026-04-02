@@ -125,6 +125,7 @@ function Cache ( option ) {
 	};
 
 	const _IS_NDN_COLLECTION = (_collection_name === "data_ndn_real");
+	const FLUSH_REPORT_NOW   = (_collection_name == "reports_all");
 	var _nextUpdateTime = 0;
 	this.addMessage = function ( msg ) {
 		const ts      = msg[ TIMESTAMP ];
@@ -140,7 +141,7 @@ function Cache ( option ) {
 		}
 
 		//only for ndn offline
-		if( _IS_NDN_COLLECTION ){
+		if( _IS_NDN_COLLECTION || FLUSH_REPORT_NOW ){
 			var data = _this.flushDataToDatabase();
 			return data;
 		}

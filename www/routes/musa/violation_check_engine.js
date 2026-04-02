@@ -967,19 +967,29 @@ function perform_check(){
       }
 
       TIMESTAMP.start = TIMESTAMP.end;
-      TIMESTAMP.end   = (new Date()).getTime();
+      TIMESTAMP.end   = last_check_ts();
 
    }, false );
 }
 
 
+// Need to check in the past of 5 seconds
+// If we use the current timestamp (now)
+//  the data (have this timestamp) might not be available yet in the database
+// This becauses Probe flush reports each 5 seconds
+//   i.e., when reports arrived at the database, 
+//        their timestamps are at least 5 seconds in the past.
+function last_check_ts(){
+	return (new Date()).getTime() - 5*1000;
+}
+
 function start( pub_sub, _dbconnector ){
 	if( ! config.sla )
 		return console.log("Not found SLA in config");
 
-	if (config.sla.violation_check_period < 1){
-		console.log("Set violation_check_period = 1 seconds");
-		config.sla.violation_check_period = 1;
+	if (config.sla.violation_check_period < 2){
+		console.log("Set violation_check_period = 2 seconds");
+		config.sla.violation_check_period = 2;
 	}
 
    console.log("Start SLA violation checking engine");
@@ -1000,7 +1010,7 @@ function start( pub_sub, _dbconnector ){
       console.log("start SLA violation checking each " + config.sla.violation_check_period + " seconds");
 
       //at the begining, we check in the period [now-X, now]
-      const now = (new Date()).getTime(); //millisecond
+      const now = last_check_ts(); //millisecond
       TIMESTAMP.start = now - CHECK_AVG_INTERVAL_MILISECOND;
       TIMESTAMP.end   = now;
       setInterval( perform_check, CHECK_AVG_INTERVAL_MILISECOND );
