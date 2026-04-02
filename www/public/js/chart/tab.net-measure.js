@@ -48,6 +48,7 @@ function inDetailMode() {
     return (fPeriod.selectedOption().id === MMTDrop.constants.period.MINUTE);
 }
 
+const INFINITY_VALUE=999999999*1000;
 //create reports
 
 var ReportFactory = {}
@@ -164,6 +165,8 @@ ReportFactory.createLatencyReport = function(fPeriod){
             format: {
                title:  formatTime,
                value: function( value ){
+                  if( value == 0 )
+                     return "&infin;";
                   return (value / 1000) + " ms";
                }
             }
@@ -299,6 +302,8 @@ ReportFactory.createJitterReport = function(fPeriod){
             format: {
                title:  formatTime,
                value: function( value ){
+                  if( value == 0 )
+                     return "&infin;";
                   return (value/1000) + " ms";
                }
             }
@@ -354,16 +359,20 @@ function splitDataByNic(data, col){
 		var msg = data[i];
 		var ts  = msg[ts_id];
 		var nic = msg[ nic_id ]
+		var val = msg[col.id];
 		
 		//remember set of NICs
 		labels[nic] = true;
 		
+		if( val == INFINITY_VALUE )
+			val=0;
+
 		//init new row
 		if( obj[ts] == undefined )
 			obj[ts] = {};
 		var o = obj[ts];
 		o[ ts_id ] = ts;
-		o[ nic ]   = msg[col.id]
+		o[ nic ]   = val
 	}
 	
 	//first column is always timestamp

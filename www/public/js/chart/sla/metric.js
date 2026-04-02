@@ -549,7 +549,7 @@ function validateValue ( metric, value ) {
    // TODO: fix
    if (acceptableValues == undefined) return true
 
-   const val = JSON.parse(value);
+   const val = value;
 
    if (name == "dlTput.minDlTputRequirement") {
       if (val < acceptableValues ) {
@@ -589,7 +589,7 @@ function validateValue ( metric, value ) {
 
 function validateTypes (metric, value) {
    const name = metric.name;
-   const val = JSON.parse(value);
+   const val = value;
 
    if (
       name == "dlTput.minDlTputRequirement" ||
@@ -674,8 +674,8 @@ function validateTypes (metric, value) {
                         return false;
 
                      selectedMetric[ comp.id ][ me.id ] = {
-                           alert     : JSON.parse(alert),
-                           violation : JSON.parse(violation),
+                           alert     : alert,
+                           violation : violation,
                            enable    : $("[id='enable-" + id + "']").is(":checked"),
                            unit      : $("[id='unit-" + id + "']").val(),
                            priority  : $("[id='priority-" + id + "']").val(),

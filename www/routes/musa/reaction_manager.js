@@ -4,7 +4,13 @@ const config      = require("../../libs/config");
 const constant    = require("../../libs/constant.js");
 const dataAdaptor = require('../../libs/dataAdaptor');
 
+//const nic = require('./wan_interfaces');
+const nic= {
+		primary  : process.env.PRIMARY_INTERFACE,
+		secondary: process.env.SECONDARY_INTERFACE
+}
 
+const restful_action = require("./post_reaction");
 //const METRIC_COL  = dataAdaptor.StatsColumnId;
 
 //interval allowing to select the alerts to be checked
@@ -34,6 +40,73 @@ var dbconnector = {};
 var publisher   = {};
 const REACTORS  = {};
 
+const LAST = {}
+
+function check_time(key){
+	if(! LAST[key] ){
+		LAST[key] = (new Date()).getTime();
+		return true;
+	}
+	const now = (new Date()).getTime();
+	if( now - LAST[key] < 60*1000 )
+		return false;
+		
+	LAST[key] = now;
+	return true;
+}
+
+function execute_restfull_action(action_name, msg, metric_alert_or_violation){
+	try{
+		const values = JSON.parse( metric_alert_or_violation[ METRIC_COL.VALUE] );
+		/*
+		val = [
+						["ip.src", ip_src], 
+						["ip.dst", ip_dst],
+						["loc.dst", dst_loc]
+				];
+		*/
+		let src_ip  = dst_ip = undefined;
+		values.forEach( function(v){ 
+			switch(v[0]){
+				case "ip.src":
+					src_ip = v[1];
+					break;
+				case "ip.dst":
+					dst_ip = v[1];
+					break;
+			}
+		});
+		
+		//if(! check_time(`${action_name}-${src_ip}-${dst_ip}`) ){
+		//	console.log(" ==> skip this action ");
+		//	return;
+		//}
+				
+		//action_name in config.sla.actions
+		switch(action_name){
+			case "drop_traffic":
+				restful_action.block_flow({src_ip, dst_ip});
+				break;
+			case "use_chan_2":
+				
+				console.log(`NIC: ${nic.secondary} : ${process.env.SECONDARY_INTERFACE}`);
+				
+				if( src_ip && dst_ip )
+					restful_action.redirect_flow({
+						src_ip: src_ip, dst_ip: dst_ip, 
+						wan_interface: nic.secondary,
+						description: `${action_name} (${new Date()})`
+					});
+				else
+					restful_action.set_gateway(nic.secondary );
+				
+				break;
+		}
+	} catch(e){
+		console.error(e.message);
+	}
+}
+
 function _getIPs( metric_alert_or_violation ){
 	const impactIPs = [];
 	const metricName = metric_alert_or_violation[ METRIC_COL.METRIC_NAME ];
@@ -58,6 +131,8 @@ function _raiseMessage( action_name, msg, metric_alert_or_violation ){
 	const action = REACTORS[ action_name ];
 	if( action == undefined )
 		return console.error("Reaction [" + action_name + "] is not supported");
+
+	execute_restfull_action(action_name, msg, metric_alert_or_violation);
 
 	if( publisher.publish ){
 		const publishMsg = {};
@@ -201,9 +276,9 @@ function start( pub_sub, _dbconnector ){
 	if( ! config.sla )
 		return console.log("Not found SLA in config");
 
-	if (config.sla.reaction_check_period < 10){
-		console.log("Set reaction_check_period = 10 seconds");
-		config.sla.reaction_check_period = 10
+	if (config.sla.reaction_check_period < 1){
+		console.log("Set reaction_check_period = 1 seconds");
+		config.sla.reaction_check_period = 1
 	}
 
 	console.log("Start SLA reaction checking engine");

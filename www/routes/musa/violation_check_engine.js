@@ -5,6 +5,11 @@ const config      = require("../../libs/config");
 const constant    = require("../../libs/constant.js");
 const dataAdaptor = require('../../libs/dataAdaptor');
 
+//const nic = require('./wan_interfaces');
+const NIC = {
+		primary  : process.env.PRIMARY_INTERFACE,
+		secondary: process.env.SECONDARY_INTERFACE
+}
 
 const COL  = dataAdaptor.StatsColumnId;
 const LAT  = dataAdaptor.LatencyColumnId;
@@ -571,7 +576,7 @@ function _checkTargetLocation( metric, m, app, com ){
 	//the thresholds can be provided via SLA file
 	const alert_loc = m.alert, violation_loc = m.violation;
 	
-	const match = {0: 100}; //only session-based protocols
+	const match = {};
 	//in checking period
 	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
 	//1. IP in the list
@@ -684,8 +689,8 @@ function _checkPacketProtocol( metric, m, app, com ){
 }
 
 
-function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
-   //nothing to do
+function _checkHigherMeasureMetric( nic, col_id, label, metric, m, app, com ){
+	//nothing to do
 	const now = (new Date()).getTime();
 
 	const unit = m.unit;
@@ -697,6 +702,8 @@ function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
 	//in checking period
 	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
 	match[col_id] = {"$gte": Math.min(alert_val, violation_val)};
+	if( nic )
+		match[COL.SOURCE_ID] = nic;
 	
 	const groupBy = {_id: {}};
 	// group by ip_src and ip_dst
@@ -742,7 +749,8 @@ function _checkHigherMeasureMetric( col_id, label, metric, m, app, com ){
 
 
 
-function _checkLowerMeasureMetric( col_id, label, metric, m, app, com ){
+function _checkLowerMeasureMetric( nic, col_id, label, metric, m, app, com ){
+
    //nothing to do
 	const now = (new Date()).getTime();
 
@@ -755,6 +763,8 @@ function _checkLowerMeasureMetric( col_id, label, metric, m, app, com ){
 	//in checking period
 	match[COL.TIMESTAMP] = {"$gte": TIMESTAMP.start,"$lt": TIMESTAMP.end};
 	match[col_id] = {"$lte": Math.max(alert_val, violation_val)};
+	if( nic )
+		match[COL.SOURCE_ID] = nic;
 	
 	const groupBy = {_id: {}};
 	// group by ip_src and ip_dst
@@ -922,18 +932,33 @@ function perform_check(){
                      _checkPacketProtocol( metric, m, app, com );
                      break;
 
-                  case "measure.HigherLatency":
-                     _checkHigherMeasureMetric( LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                  case "measure.HigherLatencyPrimary":
+                     _checkHigherMeasureMetric( NIC.primary, LAT.LATENCY_AVG, "latency", metric, m, app, com );
                      break;
-                  case "measure.HigherJitter":
-                     _checkHigherMeasureMetric( LAT.JITTER, "jitter", metric, m, app, com );
+                  case "measure.HigherJitterPrimary":
+                     _checkHigherMeasureMetric( NIC.primary, LAT.JITTER, "jitter", metric, m, app, com );
                      break;
 
-                  case "measure.LowerLatency":
-                     _checkLowerMeasureMetric( LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                  case "measure.LowerLatencyPrimary":
+                     _checkLowerMeasureMetric( NIC.primary, LAT.LATENCY_AVG, "latency", metric, m, app, com );
                      break;
-                  case "measure.LowerJitter":
-                     _checkLowerMeasureMetric( LAT.JITTER, "jitter", metric, m, app, com );
+                  case "measure.LowerJitterPrimary":
+                     _checkLowerMeasureMetric( NIC.primary, LAT.JITTER, "jitter", metric, m, app, com );
+                     break;
+
+
+                  case "measure.HigherLatencySecondary":
+                     _checkHigherMeasureMetric( NIC.secondary, LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                     break;
+                  case "measure.HigherJitterSecondary":
+                     _checkHigherMeasureMetric( NIC.secondary, LAT.JITTER, "jitter", metric, m, app, com );
+                     break;
+
+                  case "measure.LowerLatencySecondary":
+                     _checkLowerMeasureMetric( NIC.secondary, LAT.LATENCY_AVG, "latency", metric, m, app, com );
+                     break;
+                  case "measure.LowerJitterSecondary":
+                     _checkLowerMeasureMetric( NIC.secondary, LAT.JITTER, "jitter", metric, m, app, com );
                      break;
 
                }
@@ -952,9 +977,9 @@ function start( pub_sub, _dbconnector ){
 	if( ! config.sla )
 		return console.log("Not found SLA in config");
 
-	if (config.sla.violation_check_period < 5){
-		console.log("Set violation_check_period = 5 seconds");
-		config.sla.violation_check_period = 5;
+	if (config.sla.violation_check_period < 1){
+		console.log("Set violation_check_period = 1 seconds");
+		config.sla.violation_check_period = 1;
 	}
 
    console.log("Start SLA violation checking engine");
