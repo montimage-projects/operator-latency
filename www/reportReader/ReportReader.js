@@ -106,15 +106,17 @@ function Reader(){
          }
       }//end of switch
 
-      
-      //this process removes older records from Database
-      let ret = child_process( __dirname + "/maintainDB.js", [],
-      {execArgv: [
-         //'--debug=5857'
-         ]} 
-      ).start();
+      //if set limit ==> create a child to check size and maintain this limit
+      if(config.limit_database_size > 0 ){
+         //this process removes older records from Database
+         let ret = child_process( __dirname + "/maintainDB.js", [],
+         {execArgv: [
+            //'--debug=5857'
+            ]} 
+         ).start();
 
-      process._children.push( ret );
+         process._children.push( ret );
+      }
    }
 }
 
