@@ -203,7 +203,7 @@ var ReportFactory = {
                     //show info to user
                     MMTDrop.alert.warning(`Support maximally ${LIMIT_SELECT_APP} items`, 5000);
                 }
-                
+
                 const app_id_arr = [];
                 for( var i=0; i<app_path_arr.length; i++ )
                    app_id_arr.push( MMTDrop.constants.getAppIdFromPath( app_path_arr[i] ) );
@@ -301,6 +301,18 @@ var ReportFactory = {
             }
         });
 
+			function count_unique_values( data, col_id ){
+				const set = {};
+				for( var i in data ){
+					var m = data[i];
+					var v = m[col_id];
+					if( v != null && v!= undefined )
+						set[v] = true
+				}
+				return Object.keys(set).length;
+			}
+
+
         var cLine = MMTDrop.chartFactory.createTimeline({
             //columns: [MMTDrop.constants.StatsColumn.APP_PATH]
             getData: {
@@ -317,35 +329,73 @@ var ReportFactory = {
                         
                     
                     var data = db.data();
-
-                    data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
-
                     var arr = [];
                     var header = [];
-
-                    for (var time in data) {
-                        var o = {};
-                        o[COL.TIMESTAMP.id] = parseInt( time );
-
-                        var msg = data[time];
-                        for (var path in msg) {
-                            o[path] = msg[path][colToSum];
-                            if (header.indexOf(path) == -1)
-                                header.push(path);
-                        }
-                        arr.push(o);
-                    }
-
-                    var time_id = 3;
-                    var period_sampling = 1000 * fPeriod.getDistanceBetweenToSamples();
-
                     var columns = [COL.TIMESTAMP];
-                    for (var i = 0; i < header.length; i++) {
-                        var path = header[i];
-                        columns.push({
-                            id: path,
-                            label: MMTDrop.constants.getPathFriendlyName(path)
-                        });
+
+                    // single app
+                    var single_app   = (count_unique_values(data, COL.APP_PATH.id) == 1);
+                    var multi_probes = (count_unique_values(data, COL.PROBE_ID.id) >  1);
+
+                    //only one app and multi probe
+                    // draw one line for one probe
+                    if( single_app && multi_probes ){
+                       colsToGroup = [COL.TIMESTAMP.id, COL.PROBE_ID.id];
+                       data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
+
+                       for (var time in data) {
+                           var o = {};
+                           o[COL.TIMESTAMP.id] = parseInt( time );
+   
+                           var msg = data[time];
+                           var total = 0;
+                           for (var probe in msg) { 
+                               var val = msg[probe][colToSum];
+                               total += val;
+                               o[probe] = val;
+
+                               if (header.indexOf(probe) == -1)
+                                   header.push(probe);
+                           }
+                           o["total"] = total;
+                           arr.push(o);
+                       }
+
+                       header = header.sort();
+
+                       for (var i = 0; i < header.length; i++) {
+                           var path = header[i];
+                           columns.push({
+                               id: path,
+                               label: `Probe ${path}`
+                           });
+                       }
+
+                       columns.push({id: "total", label: "Total"});
+                    } else {
+                       data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
+   
+                       for (var time in data) {
+                           var o = {};
+                           o[COL.TIMESTAMP.id] = parseInt( time );
+   
+                           var msg = data[time];
+                           for (var path in msg) { 
+                               o[path] = msg[path][colToSum];
+                               if (header.indexOf(path) == -1)
+                                   header.push(path);
+                           }
+                           arr.push(o);
+                       }
+   
+                       header = header.sort();
+                       for (var i = 0; i < header.length; i++) {
+                           var path = header[i];
+                           columns.push({
+                               id: path,
+                               label: MMTDrop.constants.getPathFriendlyName(path)
+                           });
+                       }
                     }
 
                     var $widget = $("#" + cLine.elemID).getWidgetParent();
