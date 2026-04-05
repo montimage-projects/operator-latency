@@ -335,12 +335,12 @@ var ReportFactory = {
 
                     // single app
                     var single_app   = (count_unique_values(data, COL.APP_PATH.id) == 1);
-                    var multi_probes = (count_unique_values(data, COL.PROBE_ID.id) >  1);
-
+                    var select_all_probes = (fProbe.selectedOption().id == "undefined")
                     //only one app and multi probe
                     // draw one line for one probe
-                    if( single_app && multi_probes ){
+                    if( single_app && select_all_probes ){
                        colsToGroup = [COL.TIMESTAMP.id, COL.PROBE_ID.id];
+                       var multi_probes = (count_unique_values(data, COL.PROBE_ID.id) >  1);
                        data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
 
                        for (var time in data) {
@@ -371,7 +371,8 @@ var ReportFactory = {
                            });
                        }
 
-                       columns.push({id: "total", label: "Total"});
+                       if( multi_probes )
+                          columns.push({id: "total", label: "Total"});
                     } else {
                        data = MMTDrop.tools.sumByGroups(data, [colToSum], colsToGroup);
    

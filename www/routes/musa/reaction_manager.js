@@ -105,6 +105,14 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation){
 					restful_action.set_gateway(nic.secondary );
 				
 				break;
+			case "share_channels":
+				//dst_ip = "10.45.0.1"; //fixed
+				//proto  = "";
+				restful_action.share_channels({
+					"interface": nic.secondary,
+					"url": "http://www.releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
+				});
+			break;
 		}
 	} catch(e){
 		console.error(e.message);

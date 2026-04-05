@@ -171,7 +171,7 @@ ReportFactory.createLatencyReport = function(fPeriod){
                }
             }
          },
-         zoom: {
+         __zoom: {
             enabled: false,
             rescale: false
          },
@@ -308,7 +308,7 @@ ReportFactory.createJitterReport = function(fPeriod){
                }
             }
          },
-         zoom: {
+         __zoom: {
             enabled: false,
             rescale: false
          },
@@ -349,6 +349,13 @@ ReportFactory.createJitterReport = function(fPeriod){
 };
 
 function splitDataByNic(data, col){
+	/*
+	const NIC = {
+		'eth0' : 'Primary',
+		'wlan0' : 'Secondary'
+	}*/
+	const NIC = MMTDrop.config.others.modules_config.sla.nic || {};
+	
 	const COL = MMTDrop.constants.LatencyColumn;
 	const ts_id    = COL.TIMESTAMP.id;
 	const nic_id   = COL.SOURCE_ID.id;
@@ -360,6 +367,10 @@ function splitDataByNic(data, col){
 		var ts  = msg[ts_id];
 		var nic = msg[ nic_id ]
 		var val = msg[col.id];
+		
+		//rename NIC
+		if( NIC[nic] )
+			nic = `${NIC[nic]} (${nic})`
 		
 		//remember set of NICs
 		labels[nic] = true;
@@ -457,6 +468,11 @@ ReportFactory.createPacketLossReport = function(fPeriod){
                tick: {
                   format: formatTime
                }
+            },
+            y: {
+               tick: {
+                  values: [0, 25, 50, 75, 100]  // exact tick positions
+               }
             }
          },
          grid: {
@@ -472,7 +488,7 @@ ReportFactory.createPacketLossReport = function(fPeriod){
                }
             }
          },
-         zoom: {
+         __zoom: {
             enabled: false,
             rescale: false
          },
