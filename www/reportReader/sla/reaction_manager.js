@@ -84,6 +84,21 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation) {
 					dst_ip: dst_ip
 				});
 				break;
+			case "use_primary_chan":
+
+				console.log(`NIC: ${NIC.primary}`);
+
+				if (src_ip && dst_ip)
+					restful_action.redirect_flow({
+						//src_ip: src_ip, 
+						dst_ip: dst_ip,
+						wan_interface: NIC.primary,
+						description: `${action_name} (${new Date()})`
+					});
+				else
+					restful_action.set_gateway(NIC.secondary);
+
+				break;
 			case "use_chan_2":
 
 				console.log(`NIC: ${NIC.secondary}`);
@@ -101,11 +116,18 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation) {
 				break;
 			case "share_channels":
 				//dst_ip = "10.45.0.1"; //fixed
-				//proto  = "";
-				restful_action.share_channels({
-					"interface": NIC.secondary,
-					"url": "http://www.releases.ubuntu.com/focal/ubuntu-20.04.6-live-server-amd64.iso"
-				});
+				restful_action.redirect_flow({
+						dst_port: 9001,
+						protocol: 'tcp',
+						wan_interface: NIC.secondary,
+						description: `${action_name} (${new Date()})`
+					});
+				restful_action.redirect_flow({
+						dst_port: 9000,
+						protocol: 'tcp',
+						wan_interface: NIC.primary,
+						description: `${action_name} (${new Date()})`
+					});
 				break;
 		}
 	} catch (e) {
@@ -268,6 +290,8 @@ function start(_dbconnector, nic) {
 		console.log("Start SLA reaction checking engine");
 		dbconnector = _dbconnector;
 
+		CHECK_AVG_INTERVAL_MILISECOND = config.sla.reaction_check_period * 1000; //each X seconds
+		console.log("start SLA reaction checking each " + config.sla.reaction_check_period + " seconds");
 		setInterval(perform_check, CHECK_AVG_INTERVAL_MILISECOND);
 	});
 }

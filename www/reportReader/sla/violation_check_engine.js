@@ -51,6 +51,8 @@ function _createSecurityAlert(probe_id, source, timestamp, property_id, verdict,
 	});
 }
 
+const ALERTS = {};
+
 //type: violation | alert
 // keep metric_id as legacy reason
 function _raiseMessage(type, app_id, com_id, metric_id, threshold, value, priority, other) {
@@ -63,6 +65,14 @@ function _raiseMessage(type, app_id, com_id, metric_id, threshold, value, priori
 		other = JSON.stringify(other)
 	else
 		other = '{}'
+	
+	const key = JSON.stringify([app_id, com_id, metric_id, type, value, other]);
+	if(ALERTS[key])
+		return console.info("Skip this duplicated alert: ", key);
+	ALERTS[key] = 1;
+	
+	
+	
 	const timestamp = (new Date()).getTime();
 	const msg = [timestamp, app_id, com_id, metric_id, type, priority, threshold, value, other];
 	var obj = {};

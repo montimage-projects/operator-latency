@@ -159,8 +159,8 @@
 					}
 				},
 				"use_chan_2": {
-					"description": "Reroute traffic to Channel 2",
-					"agent_description": "The agent requests the router component to use Channel 2",
+					"description": "Reroute traffic to the secondary channel",
+					"agent_description": "The agent requests the router component to use the secondary Channel",
 					"inputs": {
 						"ip_src": {"description": "Source IP", "type": "IP"},
 						"ip_dst": {"description": "Destination IP", "type": "IP"},
