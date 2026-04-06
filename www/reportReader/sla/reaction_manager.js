@@ -71,10 +71,10 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation) {
 			}
 		});
 
-		//if(! check_time(`${action_name}-${src_ip}-${dst_ip}`) ){
-		//	console.log(" ==> skip this action ");
-		//	return;
-		//}
+		if(! check_time(`${action_name}-${src_ip}-${dst_ip}`) ){
+			console.log(" ==> skip this action: " + action_name);
+			return false;
+		}
 
 		//action_name in config.sla.actions
 		switch (action_name) {
@@ -130,6 +130,7 @@ function execute_restfull_action(action_name, msg, metric_alert_or_violation) {
 					});
 				break;
 		}
+		return true;
 	} catch (e) {
 		console.error(e.message);
 	}
@@ -142,7 +143,9 @@ function _raiseMessage(action_name, msg, metric_alert_or_violation) {
 	if (action == undefined)
 		return console.error("Reaction [" + action_name + "] is not supported");
 
-	execute_restfull_action(action_name, msg, metric_alert_or_violation);
+	var ret = execute_restfull_action(action_name, msg, metric_alert_or_violation);
+	if( ! ret )
+		return;
 
 	const obj = {};
 	for (const i in msg)

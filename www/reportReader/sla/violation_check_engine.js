@@ -13,6 +13,8 @@ for( let k in NIC_RAW){
 	let v = NIC_RAW[k];
 	NIC[v] = k;
 }
+console.info("NIC to check: ", JSON.stringify(NIC));
+
 /*
 {
 		primary  : process.env.PRIMARY_INTERFACE,
@@ -22,7 +24,7 @@ for( let k in NIC_RAW){
 const COL = dataAdaptor.StatsColumnId;
 const LAT = dataAdaptor.LatencyColumnId;
 
-var RELOAD_DB_INTERVAL_MILISECOND = 30 * 1000; // X second
+var RELOAD_DB_INTERVAL_MILISECOND = 10 * 1000; // X second
 
 //global variable for this module
 var dbconnector = null;
@@ -169,6 +171,8 @@ function _checkPacketProtocol(metric, m, app, com) {
 
 
 function _checkHigherMeasureMetric(nic, col_id, label, metric, m, app, com) {
+	//console.log("Check higherMetric: " + JSON.stringify({nic,, data: DATA}));
+
 	//we are interested in only latency report
 	if( DATA.report.type != dataAdaptor.CsvFormat.LATENCY_PROBE_FORMAT)
 		return;
@@ -183,6 +187,7 @@ function _checkHigherMeasureMetric(nic, col_id, label, metric, m, app, com) {
 	const row = DATA.report.msg;
 	const ret = row[col_id];
 	
+	//console.log("Check higherMetric: " + JSON.stringify({nic, alert_val, violation_val, row}))
 	//not satisfy
 	if( ret < Math.min(alert_val, violation_val) )
 		return;
